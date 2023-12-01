@@ -25,10 +25,10 @@ concept std_range =
     };
 template<class T>
 concept not_std_range =
-    !requires(T && cont) {
-         std::begin(cont);
-         std::end(cont);
-     };
+    !requires(T&& cont) {
+        std::begin(cont);
+        std::end(cont);
+    };
 template<class T>
 concept adl_range =
     requires(T&& cont) {
@@ -37,10 +37,10 @@ concept adl_range =
     };
 template<class T>
 concept not_adl_range =
-    !requires(T && cont) {
-         begin(cont);
-         end(cont);
-     };
+    !requires(T&& cont) {
+        begin(cont);
+        end(cont);
+    };
 template<class T>
 concept member_range =
     requires(T&& cont) {

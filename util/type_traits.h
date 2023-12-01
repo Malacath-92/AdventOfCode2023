@@ -8,5 +8,5 @@ struct type_list
 template<auto V>
 struct constant
 {
-	inline static constexpr auto value{ V };
+    inline static constexpr auto value{ V };
 };

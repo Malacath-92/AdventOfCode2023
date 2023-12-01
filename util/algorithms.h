@@ -387,6 +387,8 @@ constexpr bool case_insensitive_equal(char (&lhs)[N], char (&rhs)[M])
 std::string to_lower(std::string str);
 std::string to_upper(std::string str);
 
+std::string replace_substr(std::string str, std::string_view substr, std::string_view replace);
+
 std::string read_whole_file(std::string_view file_path);
 
 // Intentionally copies args, require std::reference_wrapper if people want references

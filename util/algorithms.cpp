@@ -20,6 +20,17 @@ std::string to_upper(std::string str)
     return upper_case;
 }
 
+std::string replace_substr(std::string str, std::string_view substr, std::string_view replace)
+{
+    size_t pos = 0;
+    while ((pos = str.find(substr, pos)) != std::string::npos)
+    {
+        str.replace(pos, substr.length(), replace);
+        pos += replace.length();
+    }
+    return std::move(str);
+}
+
 std::string read_whole_file(std::string_view file_path)
 {
     FILE* file{ nullptr };

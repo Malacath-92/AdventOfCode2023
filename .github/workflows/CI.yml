@@ -1,0 +1,72 @@
+name: Github Actions CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.compiler }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      matrix:
+        os: [Ubuntu, Windows]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        exclude:
+          - os: Windows
+            compiler: gcc
+        include:
+          - compiler: gcc
+            c_compiler: gcc
+            cxx_compiler: g++
+            generator: Ninja
+          - compiler: clang
+            c_compiler: clang
+            cxx_compiler: clang++
+            generator: Ninja
+          - os: Ubuntu
+            runs_on: ubuntu-22.04
+          - os: Windows
+            runs_on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: lukka/get-cmake@latest
+
+      - name: Prepare
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
+
+      - name: Cache conan
+        uses: actions/cache@v3
+        with:
+          path: |
+            c:/Users/runneradmin/.conan
+            c:/.conan
+          key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
+
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake .. -Wno-dev -G"${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER=${{matrix.c_compiler}} -DCMAKE_CXX_COMPILER=${{matrix.cxx_compiler}}
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config ${{matrix.build_type}}
+      
+      - name: Test
+        run: |
+          cd build
+          ctest . --output-on-failure --build-config ${{matrix.build_type}}

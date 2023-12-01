@@ -115,8 +115,9 @@ foreach(main_file ${aoc_main_files})
 	set_target_properties(${main_file_name} PROPERTIES
 		VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		VS_DEBUGGER_COMMAND_ARGUMENTS "inputs/${main_file_name}.txt")
-    add_test(${main_file_name}
-		COMMAND "${main_file_name} inputs/${main_file_name}.txt"
+    add_test(
+		NAME ${main_file_name}
+		COMMAND ${main_file_name} "inputs/${main_file_name}.txt"
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endforeach()
 

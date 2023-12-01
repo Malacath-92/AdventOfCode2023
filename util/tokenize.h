@@ -240,7 +240,7 @@ class Tokenize
 
 namespace algo
 {
-template<char Delimeter>
+template<LiteralString Delimeter>
 constexpr std::vector<std::string_view> split(std::string_view str)
 {
     std::vector<std::string_view> sub_strings;

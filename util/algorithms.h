@@ -160,14 +160,23 @@ constexpr auto contains(ContainerT&& container, FunT&& fun, V&& val)
                        { return fun(element) == val; });
 }
 
-template<class OutContainerT, range ContainerT, range_element_invocable_r<ContainerT, range_element_t<OutContainerT>> FunT>
+template<class OutContainerT,
+         range ContainerT,
+         range_element_invocable_r<ContainerT, range_element_t<OutContainerT>> FunT>
 constexpr auto transformed(ContainerT&& container, FunT&& fun)
 {
+    auto in_begin{ get_begin(container) };
+    auto in_end{ get_end(container) };
+    const size_t size{ static_cast<size_t>(std::distance(in_begin, in_end)) };
+
     OutContainerT out;
-    std::transform(get_begin(container), get_end(container), get_begin(out), std::forward<FunT>(fun));
+    out.resize(size);
+    std::transform(in_begin, in_end, get_begin(out), std::forward<FunT>(fun));
     return out;
 }
-template<range ContainerT, range_element_invocable<ContainerT> FunT, std::invocable<const ContainerT&> MakeOutContainerFunT>
+template<range ContainerT,
+         range_element_invocable<ContainerT> FunT,
+         std::invocable<const ContainerT&> MakeOutContainerFunT>
 constexpr auto transformed(ContainerT&& container, FunT&& fun, MakeOutContainerFunT&& make_out_container)
 {
     auto out{ std::invoke(make_out_container, container) };
@@ -377,6 +386,8 @@ constexpr bool case_insensitive_equal(char (&lhs)[N], char (&rhs)[M])
 
 std::string to_lower(std::string str);
 std::string to_upper(std::string str);
+
+std::string read_whole_file(std::string_view file_path);
 
 // Intentionally copies args, require std::reference_wrapper if people want references
 // https://github.com/lefticus/tools/blob/main/include/lefticus/tools/curry.hpp

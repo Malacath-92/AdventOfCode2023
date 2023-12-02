@@ -40,13 +40,7 @@ struct GameLowerBound
 template<>
 constexpr auto ToType<size_t>(std::string_view type_as_string)
 {
-    size_t result;
-    auto [ptr, ec] = std::from_chars(type_as_string.data(), type_as_string.data() + type_as_string.size(), result);
-    if (ec != std::errc{})
-    {
-        throw std::logic_error{ fmt::format("String '{}' is not a valid number...", type_as_string) };
-    }
-    return result;
+    return algo::stoi<size_t>(type_as_string);
 }
 
 template<>

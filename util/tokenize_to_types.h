@@ -10,11 +10,7 @@
 template<class T>
 constexpr auto ToType(std::string_view type_as_string)
 {
-    T val{};
-    std::from_chars(type_as_string.data(),
-                    type_as_string.data() + type_as_string.size(),
-                    val);
-    return val;
+    return T{};
 }
 template<>
 constexpr auto ToType<char>(std::string_view type_as_string)

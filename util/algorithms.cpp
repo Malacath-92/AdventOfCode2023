@@ -33,9 +33,7 @@ std::string replace_substr(std::string str, std::string_view substr, std::string
 
 std::string read_whole_file(std::string_view file_path)
 {
-    FILE* file{ nullptr };
-    auto error = fopen_s(&file, std::string{ file_path }.c_str(), "rb");
-    if (error == 0 && file != nullptr)
+    if (FILE * file{ fopen(std::string{ file_path }.c_str(), "rb") })
     {
         struct CloseFileOnScopeExit
         {

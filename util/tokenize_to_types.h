@@ -8,7 +8,7 @@
 #include "tokenize.h"
 
 template<class T>
-constexpr auto ToType(std::string_view type_as_string)
+constexpr auto ToType(std::string_view)
 {
     return T{};
 }

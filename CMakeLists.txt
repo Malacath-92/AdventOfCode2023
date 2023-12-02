@@ -59,6 +59,7 @@ endif()
 
 add_library(aoc_definitions INTERFACE)
 target_compile_definitions(aoc_definitions INTERFACE
+	_CRT_SECURE_NO_WARNINGS
 	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 	WIN32_LEAN_AND_MEAN
 	NOMINMAX)

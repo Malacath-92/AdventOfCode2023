@@ -119,7 +119,7 @@ int main(int argc, char** argv)
             }),
     };
 
-    constexpr Bag sample_bag{
+    static constexpr Bag sample_bag{
         {
             .Green = 13,
             .Blue = 14,

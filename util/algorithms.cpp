@@ -60,6 +60,7 @@ std::string read_whole_file(std::string_view file_path)
             return code;
         }
 
+        algo::erase(code, '\r');
         return code;
     }
     return {};

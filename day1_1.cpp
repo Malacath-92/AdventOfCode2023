@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
     const std::string_view input_file{ argv[1] };
     const std::string file_data{ algo::read_whole_file(input_file) };
-    const std::vector lines{ algo::split<"\r\n">(file_data) };
+    const std::vector lines{ algo::split<'\n'>(file_data) };
 
     struct Digits
     {

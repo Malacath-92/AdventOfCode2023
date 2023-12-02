@@ -19,6 +19,16 @@ constexpr auto max_index(ContainerT&& container)
     const auto max_it = std::max_element(begin_it, end_it);
     return static_cast<std::size_t>(max_it - begin_it);
 }
+template<range ContainerT, range_element_invocable<ContainerT> FunT>
+constexpr auto max_index(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    auto compare = [fun = make_range_element_invocable<ContainerT>(std::forward<FunT>(fun))](auto& lhs, auto& rhs)
+    { return fun(lhs) < fun(rhs); };
+    const auto max_it = std::max_element(begin_it, end_it, compare);
+    return static_cast<std::size_t>(max_it - begin_it);
+}
 template<range ContainerT, range_element_addable<ContainerT> ValueT>
 constexpr auto accumulate(ContainerT&& container, ValueT&& initial_value = {})
 {

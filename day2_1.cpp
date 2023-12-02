@@ -94,11 +94,6 @@ constexpr auto ToType<Game>(std::string_view type_as_string)
     return Game{ id, std::move(hands) };
 }
 
-constexpr bool CanBeValidPull(Hand hand, Bag bag)
-{
-    return hand.Green <= bag.Green && hand.Blue <= bag.Blue && hand.Red <= bag.Red;
-}
-
 int main(int argc, char** argv)
 {
     if (argc != 2)
@@ -138,8 +133,14 @@ int main(int argc, char** argv)
         }
     };
 
+    // clang-format off
     const auto is_valid = [](const GameLowerBound& game)
-    { return CanBeValidPull(game.LowerBoundHand, sample_bag); };
+    {
+        return game.LowerBoundHand.Green <= sample_bag.Green
+            && game.LowerBoundHand.Blue <= sample_bag.Blue
+            && game.LowerBoundHand.Red <= sample_bag.Red;
+    };
+    // clang-format on
     auto valid_ids{
         lower_bounds | std::views::filter(is_valid) | std::views::transform(std::mem_fn(&GameLowerBound::Id))
     };

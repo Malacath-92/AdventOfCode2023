@@ -11,22 +11,36 @@ jobs:
     name: ${{ matrix.os }} ${{ matrix.compiler }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.runs_on }}
     strategy:
+      fail-fast: True
+      max-parallel: 1
       matrix:
-        os: [Ubuntu, Windows]
-        compiler: [gcc, clang]
+        os: [MacOS, Ubuntu, Windows]
+        compiler: [gcc, clang, msvc]
         build_type: [Debug, Release]
         exclude:
+          - os: MacOS
+            compiler: msvc
+          - os: Ubuntu
+            compiler: msvc
+          - os: Ubuntu
+            compiler: clang # temporarily to get a green build, needs clang-16
           - os: Windows
             compiler: gcc
         include:
           - compiler: gcc
-            c_compiler: gcc
-            cxx_compiler: g++
+            c_compiler: gcc-12
+            cxx_compiler: g++-12
             generator: Ninja
           - compiler: clang
-            c_compiler: clang
-            cxx_compiler: clang++
+            c_compiler: clang-15
+            cxx_compiler: clang++-15
             generator: Ninja
+          - compiler: msvc
+            c_compiler: cl
+            cxx_compiler: cl
+            generator: Visual Studio 17 2022
+          - os: MacOS
+            runs_on: macos-12
           - os: Ubuntu
             runs_on: ubuntu-22.04
           - os: Windows
@@ -35,38 +49,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: recursive
+          submodules: True
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: 3.11
       - uses: lukka/get-cmake@latest
 
-      - name: Prepare
+      - name: Install Conan
         run: |
-          python -m pip install --upgrade pip
-          pip install conan
+          python3 -m pip install --upgrade pip
+          pip install conan==1.*
+          conan --version
 
-      - name: Cache conan
-        uses: actions/cache@v3
-        with:
-          path: |
-            c:/Users/runneradmin/.conan
-            c:/.conan
-          key: ${{ matrix.build_type }}-conan-${{ hashFiles('**/conanfile.txt') }}
-
-      - name: Configure
+      - name: Configure (Windows - Clang)
+        id: configure_windows_clang
+        if: ${{ matrix.os == 'Windows' && matrix.compiler == 'clang' }}
         run: |
           mkdir build
           cd build
-          cmake .. -Wno-dev -G"${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER=${{matrix.c_compiler}} -DCMAKE_CXX_COMPILER=${{matrix.cxx_compiler}}
+          cmake .. -Wno-dev -G"${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+
+      - name: Configure (MacOS - Clang)
+        id: configure_macos_clang
+        if: ${{ matrix.os == 'MacOS' && matrix.compiler == 'clang' }}
+        run: |
+          mkdir build
+          cd build
+          cmake .. -Wno-dev -G"${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++
+
+      - name: Configure
+        if: ${{ steps.configure_windows_clang.conclusion == 'skipped' && steps.configure_macos_clang.conclusion == 'skipped' }}
+        run: |
+          mkdir build
+          cd build
+          cmake .. -Wno-dev -G"${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_CONFIGURATION_TYPES=${{matrix.build_type}} -DCMAKE_C_COMPILER=${{matrix.c_compiler}} -DCMAKE_CXX_COMPILER=${{matrix.cxx_compiler}}
 
       - name: Build
         run: |
           cd build
           cmake --build . --config ${{matrix.build_type}}
-      
+
       - name: Test
         run: |
           cd build
-          ctest . --output-on-failure --build-config ${{matrix.build_type}}
+          ctest . -C ${{matrix.build_type}} --output-on-failure

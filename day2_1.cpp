@@ -145,6 +145,7 @@ int main(int argc, char** argv)
     };
 
     const auto sum_of_ids{ algo::accumulate(valid_ids, size_t{ 0 }) };
+    fmt::print("The result is: {}", sum_of_ids);
 
-    return sum_of_ids != 8;
+    return sum_of_ids != 2283;
 }

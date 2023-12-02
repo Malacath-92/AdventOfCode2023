@@ -43,18 +43,19 @@ macro(run_conan)
         set(LIST_OF_BUILD_TYPES ${CMAKE_CONFIGURATION_TYPES})
     endif()
 
-    option(PLAYLUNKY_CONAN_VERBOSE "Print verbose info from conan" OFF)
+    option(AOC_CONAN_VERBOSE "Print verbose info from conan" OFF)
 
-    if(${PLAYLUNKY_CONAN_VERBOSE})
+    if(${AOC_CONAN_VERBOSE})
         set(OUTPUT_QUIET "")
     else()
         set(OUTPUT_QUIET "OUTPUT_QUIET")
     endif()
 
-    if (("${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "GNU")
-        AND ("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC"))
-        # This setup makes no sense, so conan doesn't get it either...
-        unset(CMAKE_CXX_SIMULATE_ID)
+    if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND
+        ("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC") AND
+        ("${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "GNU"))
+        # This makes no sense, clang with a GNU-like CLI is not simulating MSVC
+        set(CMAKE_CXX_SIMULATE_ID "")
     endif()
 
     foreach(TYPE ${LIST_OF_BUILD_TYPES})

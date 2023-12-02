@@ -285,7 +285,7 @@ constexpr auto count(ContainerT&& container, FunT&& fun, V&& val)
 template<class T>
 constexpr T stoi(std::string_view str)
 {
-    constexpr auto stoi_impl = []<class U>(this U self, std::string_view str, T value)
+    constexpr auto stoi_impl = [](std::string_view str, T value, auto& self) -> T
     {
         constexpr auto is_digit = [](char c) -> bool
         {
@@ -301,7 +301,7 @@ constexpr T stoi(std::string_view str)
             const char front{ str[0] };
             if (is_digit(front))
             {
-                return self(str.substr(1), (front - '0') + value * 10);
+                return self(str.substr(1), (front - '0') + value * 10, self);
             }
             else
             {
@@ -309,7 +309,7 @@ constexpr T stoi(std::string_view str)
             }
         }
     };
-    return stoi_impl(str, 0);
+    return stoi_impl(str, 0, stoi_impl);
 }
 
 std::string path_string(const std::filesystem::path& path);

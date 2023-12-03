@@ -89,7 +89,7 @@ int main(int argc, char** argv)
             }
         }
         std::ranges::for_each(cleaned, [](auto& line)
-                              { algo::erase_if(line, is_symbol); });
+                              { algo::replace(line, is_symbol, ' '); });
         return cleaned;
     };
     const std::vector cleaned{ get_clean_schematics(schematic) };
@@ -98,5 +98,5 @@ int main(int argc, char** argv)
     const size_t sum_of_parts{ algo::accumulate(numbers, size_t{ 0 }) };
     fmt::print("The result is: {}", sum_of_parts);
 
-    return (int)sum_of_parts;
+    return sum_of_parts != 544433;
 }

@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <functional>
+#include <iterator>
 #include <numeric>
 #include <string_view>
 #include <utility>
@@ -169,16 +170,6 @@ constexpr auto contains(ContainerT&& container, FunT&& fun, V&& val)
                        [fun = make_range_element_invocable<ContainerT>(std::forward<FunT>(fun)), val = std::forward<V>(val)](auto& element)
                        { return fun(element) == val; });
 }
-
-template<class ContainerT, class NewValueT>
-struct rebind_value;
-template<class OldValueT, class... ArgsT, template<class...> class ContainerT, class NewValueT>
-struct rebind_value<ContainerT<OldValueT, ArgsT...>, NewValueT>
-{
-    using type = ContainerT<NewValueT, typename rebind_value<ArgsT, NewValueT>::type...>;
-};
-template<range ContainerT, class NewValueT>
-using rebind_value_t = typename rebind_value<ContainerT, NewValueT>::type;
 
 template<resizable_range ContainerT,
          class FunT>

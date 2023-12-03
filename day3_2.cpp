@@ -116,5 +116,5 @@ int main(int argc, char** argv)
     const size_t sum_of_gears{ algo::accumulate(gear_ratios, size_t{ 0 }) };
     fmt::print("The result is: {}", sum_of_gears);
 
-    return sum_of_gears != 544433;
+    return sum_of_gears != 76314915;
 }

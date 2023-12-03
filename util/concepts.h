@@ -92,13 +92,15 @@ concept range =
         get_end(cont);
     };
 
+// clang-format off
 template<class T>
 concept resizable_range =
-    range<T>&&
-requires(T &&)
+    range<T> &&
+    requires(T &&)
 {
     std::declval<std::remove_const_t<std::decay_t<T>>>().resize(size_t{});
 };
+// clang-format on
 
 template<class T>
 requires range<T>

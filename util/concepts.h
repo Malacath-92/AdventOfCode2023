@@ -137,6 +137,8 @@ concept range_element_invocable_r =
     range_element_invocable_plain_r<FunT, ContainerT, RetT> || range_element_invocable_mem_fun_r<FunT, ContainerT, RetT>;
 
 template<class ValueT, class ContainerT>
+concept range_element_convertible = std::convertible_to<ValueT, range_value_t<ContainerT>>;
+template<class ValueT, class ContainerT>
 concept range_element_comparable = std::equality_comparable_with<ValueT, range_value_t<ContainerT>>;
 template<class FunT, class ContainerT>
 using range_element_invoke_result_t =

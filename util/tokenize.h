@@ -240,13 +240,13 @@ class Tokenize
 
 namespace algo
 {
-template<LiteralString Delimeter>
-constexpr std::vector<std::string_view> split(std::string_view str)
+template<LiteralString Delimeter, class OutputT = std::string_view>
+constexpr std::vector<OutputT> split(std::string_view str)
 {
-    std::vector<std::string_view> sub_strings;
+    std::vector<OutputT> sub_strings;
     for (auto&& sub_string : Tokenize<Delimeter>{ str })
     {
-        sub_strings.push_back(sub_string);
+        sub_strings.push_back(OutputT{ sub_string });
     }
     return sub_strings;
 }

@@ -282,6 +282,19 @@ constexpr auto count(ContainerT&& container, FunT&& fun, V&& val)
                     { return fun(element) == val; });
 }
 
+template<range ContainerT, range_element_convertible<ContainerT> ValueT>
+constexpr auto replace(ContainerT&& container, ValueT&& from, ValueT&& to)
+{
+    std::replace(get_begin(container), get_end(container), std::forward<ValueT>(from), std::forward<ValueT>(to));
+    return std::forward<ContainerT>(container);
+}
+template<range ContainerT, range_element_invocable<ContainerT> FunT, range_element_convertible<ContainerT> ValueT>
+constexpr auto replace(ContainerT&& container, FunT&& from, ValueT&& to)
+{
+    std::replace_if(get_begin(container), get_end(container), std::forward<FunT>(from), std::forward<ValueT>(to));
+    return std::forward<ContainerT>(container);
+}
+
 template<class T>
 constexpr T stoi(std::string_view str)
 {
@@ -310,6 +323,30 @@ constexpr T stoi(std::string_view str)
         }
     };
     return stoi_impl(str, 0, stoi_impl);
+}
+
+template<range ContainerT,
+         class ValueT = range_element_t<ContainerT>,
+         class CharT = typename ValueT::value_type>
+requires one_of<range_element_t<ContainerT>, std::string_view, std::string, const char*>
+constexpr std::string join(const ContainerT& elements, const CharT* delimiter)
+{
+    std::basic_ostringstream<CharT> stream;
+    auto begin = std::begin(elements);
+    auto end = std::end(elements);
+
+    if (begin != end)
+    {
+        std::copy(begin, std::prev(end), std::ostream_iterator<ValueT>{ stream, delimiter });
+        begin = std::prev(end);
+    }
+
+    if (begin != end)
+    {
+        stream << *begin;
+    }
+
+    return stream.str();
 }
 
 std::string path_string(const std::filesystem::path& path);

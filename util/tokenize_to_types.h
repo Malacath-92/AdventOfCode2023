@@ -29,7 +29,7 @@ template<
     class T,
     LiteralString Delimiter = ' ',
     size_t Storage = TokenizeStorageAuto,
-    TokenizeBehavior Behavior = TokenizeBehavior::TrimWhitespace,
+    TokenizeBehavior Behavior = TokenizeBehavior::TrimWhitespace | TokenizeBehavior::SkipEmpty,
     size_t MaxTokens = std::string_view::npos>
 constexpr auto TokenizeToTypes(std::string_view input)
 {

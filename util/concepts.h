@@ -93,6 +93,12 @@ concept range =
     };
 
 template<class T>
+concept resizable_range =
+    range<T> && requires(T&&) {
+        std::declval<std::remove_const_t<std::decay_t<T>>>().resize(size_t{});
+    };
+
+template<class T>
 requires range<T>
 using range_element_t = std::decay_t<decltype(*get_begin(std::declval<T>()))>;
 template<class T>

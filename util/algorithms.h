@@ -170,6 +170,32 @@ constexpr auto contains(ContainerT&& container, FunT&& fun, V&& val)
                        { return fun(element) == val; });
 }
 
+template<class ContainerT, class NewValueT>
+struct rebind_value;
+template<class OldValueT, class... ArgsT, template<class...> class ContainerT, class NewValueT>
+struct rebind_value<ContainerT<OldValueT, ArgsT...>, NewValueT>
+{
+    using type = ContainerT<NewValueT, typename rebind_value<ArgsT, NewValueT>::type...>;
+};
+template<range ContainerT, class NewValueT>
+using rebind_value_t = typename rebind_value<ContainerT, NewValueT>::type;
+
+template<resizable_range ContainerT,
+         class FunT>
+constexpr auto transformed(ContainerT&& container, FunT&& fun)
+{
+    using NewValueT = std::decay_t<std::invoke_result_t<FunT, range_element_t<ContainerT>>>;
+    using OutContainerT = rebind_value_t<std::decay_t<ContainerT>, std::decay_t<NewValueT>>;
+
+    auto in_begin{ get_begin(container) };
+    auto in_end{ get_end(container) };
+    const size_t size{ static_cast<size_t>(std::distance(in_begin, in_end)) };
+
+    OutContainerT out{};
+    out.resize(size);
+    std::transform(in_begin, in_end, get_begin(out), std::forward<FunT>(fun));
+    return out;
+}
 template<class OutContainerT,
          range ContainerT,
          range_element_invocable_r<ContainerT, range_element_t<OutContainerT>> FunT>
@@ -179,7 +205,7 @@ constexpr auto transformed(ContainerT&& container, FunT&& fun)
     auto in_end{ get_end(container) };
     const size_t size{ static_cast<size_t>(std::distance(in_begin, in_end)) };
 
-    OutContainerT out;
+    OutContainerT out{};
     out.resize(size);
     std::transform(in_begin, in_end, get_begin(out), std::forward<FunT>(fun));
     return out;

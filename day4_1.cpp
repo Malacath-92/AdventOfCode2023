@@ -57,16 +57,10 @@ int main(int argc, char** argv)
 
     static constexpr auto power_of_two = [](size_t i)
     { return static_cast<size_t>(std::pow(2, i)); };
-    const size_t numbers_per_card{ cards.front().Have.size() };
-    const std::vector powers_of_two{
-        std::views::iota(size_t{ 0 }, numbers_per_card) |
-            std::views::transform(power_of_two) |
-            std::ranges::to<std::vector>(),
-    };
-
-    static const auto compute_points = [&](const auto& points)
+    static constexpr auto compute_points = [](const auto& winning_numbers)
     {
-        return algo::accumulate(std::views::zip_transform(std::multiplies<>{}, points, powers_of_two), size_t{ 0 });
+        const size_t number_winning_numbers{ winning_numbers.size() };
+        return number_winning_numbers == 0 ? 0 : power_of_two(number_winning_numbers - 1);
     };
     const std::vector winning_points{ algo::transformed(winning_numbers, compute_points) };
 

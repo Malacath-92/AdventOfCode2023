@@ -185,4 +185,14 @@ struct range_contains
 template<class T, class U>
 requires range<T>
 inline constexpr bool range_contains_v = range_contains<T, U>::value;
+
+template<class ContainerT, class NewValueT>
+struct rebind_value;
+template<class OldValueT, class... ArgsT, template<class...> class ContainerT, class NewValueT>
+struct rebind_value<ContainerT<OldValueT, ArgsT...>, NewValueT>
+{
+    using type = ContainerT<NewValueT, typename rebind_value<ArgsT, NewValueT>::type...>;
+};
+template<range ContainerT, class NewValueT>
+using rebind_value_t = typename rebind_value<ContainerT, NewValueT>::type;
 } // namespace algo

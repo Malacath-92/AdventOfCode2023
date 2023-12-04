@@ -67,5 +67,5 @@ int main(int argc, char** argv)
     const size_t sum_of_points{ algo::accumulate(winning_points, size_t{ 0 }) };
     fmt::print("The result is: {}", sum_of_points);
 
-    return sum_of_points != 76314915;
+    return sum_of_points != 23941;
 }

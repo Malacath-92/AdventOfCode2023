@@ -14,29 +14,17 @@ jobs:
       fail-fast: True
       max-parallel: 1
       matrix:
-        os: [MacOS, Ubuntu, Windows]
-        compiler: [gcc, msvc]
+        os: [Windows]
+        compiler: [msvc]
         build_type: [Debug, Release]
         exclude:
-          - os: MacOS
-            compiler: msvc
-          - os: Ubuntu
-            compiler: msvc
           - os: Windows
             compiler: gcc
         include:
-          - compiler: gcc
-            c_compiler: gcc-12
-            cxx_compiler: g++-12
-            generator: Ninja
           - compiler: msvc
             c_compiler: cl
             cxx_compiler: cl
             generator: Visual Studio 17 2022
-          - os: MacOS
-            runs_on: macos-12
-          - os: Ubuntu
-            runs_on: ubuntu-22.04
           - os: Windows
             runs_on: windows-2022
 

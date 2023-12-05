@@ -1,5 +1,6 @@
 [requires]
 fmt/9.1.0
+magic_enum/0.9.3
 
 [generators]
 CMakeDeps

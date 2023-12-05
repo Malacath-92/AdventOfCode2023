@@ -13,6 +13,25 @@
 namespace algo
 {
 template<range ContainerT>
+constexpr auto min_index(ContainerT&& container)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    const auto min_it = std::min_element(begin_it, end_it);
+    return static_cast<std::size_t>(min_it - begin_it);
+}
+template<range ContainerT, range_element_invocable<ContainerT> FunT>
+constexpr auto min_index(ContainerT&& container, FunT&& fun)
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    auto compare = [fun = make_range_element_invocable<ContainerT>(std::forward<FunT>(fun))](auto& lhs, auto& rhs)
+    { return fun(lhs) < fun(rhs); };
+    const auto min_it = std::min_element(begin_it, end_it, compare);
+    return static_cast<std::size_t>(min_it - begin_it);
+}
+
+template<range ContainerT>
 constexpr auto max_index(ContainerT&& container)
 {
     const auto begin_it = get_begin(container);
@@ -30,6 +49,29 @@ constexpr auto max_index(ContainerT&& container, FunT&& fun)
     const auto max_it = std::max_element(begin_it, end_it, compare);
     return static_cast<std::size_t>(max_it - begin_it);
 }
+
+template<range ContainerT>
+constexpr auto min_element(ContainerT&& container)
+{
+    return container[min_index(std::forward<ContainerT>(container))];
+}
+template<range ContainerT, range_element_invocable<ContainerT> FunT>
+constexpr auto min_element(ContainerT&& container, FunT&& fun)
+{
+    return container[min_index(std::forward<ContainerT>(container), std::forward<FunT>(fun))];
+}
+
+template<range ContainerT>
+constexpr auto max_element(ContainerT&& container)
+{
+    return container[max_index(std::forward<ContainerT>(container))];
+}
+template<range ContainerT, range_element_invocable<ContainerT> FunT>
+constexpr auto max_element(ContainerT&& container, FunT&& fun)
+{
+    return container[max_index(std::forward<ContainerT>(container), std::forward<FunT>(fun))];
+}
+
 template<range ContainerT, range_element_addable<ContainerT> ValueT>
 constexpr auto accumulate(ContainerT&& container, ValueT&& initial_value = {})
 {

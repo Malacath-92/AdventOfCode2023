@@ -36,6 +36,7 @@ run_conan()
 # --------------------------------------------------
 # Find packages
 find_package(fmt QUIET REQUIRED)
+find_package(magic_enum QUIET REQUIRED)
 
 # --------------------------------------------------
 # Create interface libs
@@ -69,7 +70,8 @@ set_property(
 
 add_library(aoc_dependencies INTERFACE)
 target_link_libraries(aoc_dependencies INTERFACE
-    fmt::fmt)
+    fmt::fmt
+	magic_enum::magic_enum)
 
 add_library(aoc_precompiled_headers INTERFACE)
 target_precompile_headers(aoc_precompiled_headers INTERFACE

@@ -104,18 +104,14 @@ constexpr auto ToType<Almanac>(std::string_view type_as_string)
     const std::vector raw_seeds_list{ TokenizeToTypes<size_t>(algo::split<':'>(paragraphs[0])[1]) };
 
     const auto expand_range = std::views::transform(
-        [](auto pair)
+        [](auto chunk)
         {
-            auto [from, size] = pair;
-            return std::views::iota(*from, *from + *size) | std::ranges::to<std::vector>();
+            const size_t from{ chunk[0] };
+            const size_t size{ chunk[1] };
+            return std::views::iota(from, from + size) | std::ranges::to<std::vector>();
         });
-    const auto a{
-        raw_seeds_list | std::views::chunk(2) | expand_range | std::ranges::to<std::vector>()
-    };
-    //| std::views::join | std::ranges::to<std::vector>()
     return Almanac{
-        {},
-        // TokenizeToTypes<size_t>(algo::split<':'>(paragraphs[0])[1]) | std::views::chunk(2) | expand_range | flatten | std::ranges::to<std::vector>(),
+        raw_seeds_list | std::views::chunk(2) | expand_range | std::views::join | std::ranges::to<std::vector>(),
         paragraphs | std::views::drop(1) | std::views::transform(&ToType<PropertyMapping>) | std::ranges::to<std::vector>(),
     };
 }

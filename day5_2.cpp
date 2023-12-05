@@ -73,7 +73,9 @@ constexpr auto ToType<PropertyMapping::Range>(std::string_view type_as_string)
 template<>
 constexpr auto ToType<PropertyMapping>(std::string_view type_as_string)
 {
-    PropertyMapping mapping{};
+    PropertyMapping mapping{
+
+    };
 
     {
         const auto to_string_views{ std::views::transform([](auto sr)

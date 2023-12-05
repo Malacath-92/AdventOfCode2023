@@ -21,6 +21,12 @@ enum class Property
     Location,
 };
 
+struct PropertyRange
+{
+    size_t Begin;
+    size_t End;
+};
+
 struct PropertyMapping
 {
     Property From;
@@ -29,15 +35,15 @@ struct PropertyMapping
     struct Range
     {
         size_t FromBegin;
+        size_t FromEnd;
         size_t ToBegin;
-        size_t Size;
     };
     std::vector<Range> Ranges;
 };
 
 struct Almanac
 {
-    std::vector<size_t> RequiredSeeds;
+    std::vector<PropertyRange> RequiredSeeds;
     std::vector<PropertyMapping> Mappings;
 };
 
@@ -65,7 +71,7 @@ constexpr auto ToType<PropertyMapping::Range>(std::string_view type_as_string)
         auto it = std::begin(numbers);
         range.ToBegin = *(it++);
         range.FromBegin = *(it++);
-        range.Size = *(it++);
+        range.FromEnd = range.FromBegin + *(it++);
     }
     return range;
 }
@@ -103,15 +109,15 @@ constexpr auto ToType<Almanac>(std::string_view type_as_string)
     const std::vector paragraphs{ algo::split<"\n\n">(type_as_string) };
     const std::vector raw_seeds_list{ TokenizeToTypes<size_t>(algo::split<':'>(paragraphs[0])[1]) };
 
-    const auto expand_range = std::views::transform(
+    const auto to_seed_range = std::views::transform(
         [](auto chunk)
         {
             const size_t from{ chunk[0] };
             const size_t size{ chunk[1] };
-            return std::views::iota(from, from + size) | std::ranges::to<std::vector>();
+            return PropertyRange{ from, from + size };
         });
     return Almanac{
-        raw_seeds_list | std::views::chunk(2) | expand_range | std::views::join | std::ranges::to<std::vector>(),
+        raw_seeds_list | std::views::chunk(2) | to_seed_range | std::ranges::to<std::vector>(),
         paragraphs | std::views::drop(1) | std::views::transform(&ToType<PropertyMapping>) | std::ranges::to<std::vector>(),
     };
 }
@@ -129,34 +135,90 @@ int main(int argc, char** argv)
 
     const Almanac almanac{ ToType<Almanac>(file_data) };
 
-    const auto do_mapping = [&](this auto self, size_t value, Property from, Property to) -> size_t
+    const auto do_mapping = [&](std::vector<PropertyRange> value, Property from, Property to, auto& self) -> std::vector<PropertyRange>
     {
         while (std::to_underlying(to) - std::to_underlying(from) > 1)
         {
             const Property next{ static_cast<Property>(std::to_underlying(from) + 1) };
-            value = self(value, from, next);
+            value = self(std::move(value), from, next, self);
             from = next;
         }
 
         const PropertyMapping& mapping{ *algo::find(almanac.Mappings, &PropertyMapping::From, from) };
-        for (auto& [from_begin, to_begin, size] : mapping.Ranges)
+
+        std::vector<PropertyRange> out_ranges{};
+        for (auto it = value.begin(); it != value.end();)
         {
-            if (value >= from_begin && value < from_begin + size)
+            bool exhausted{ false };
+
+            for (const auto& [from_begin, from_end, to_begin] : mapping.Ranges)
             {
-                return static_cast<size_t>(to_begin + (value - from_begin));
+                const auto& [input_begin, input_end] = *it;
+
+                const size_t overlap_begin{
+                    input_begin < from_begin
+                        ? from_begin
+                        : input_begin,
+                };
+                const size_t overlap_end{
+                    input_end > from_end
+                        ? from_end
+                        : input_end,
+                };
+                if (overlap_begin < overlap_end)
+                {
+                    const size_t mapped_begin{ static_cast<size_t>(to_begin + (overlap_begin - from_begin)) };
+                    const size_t mapped_end{ static_cast<size_t>(to_begin + (overlap_end - from_begin)) };
+                    PropertyRange mapped_range{ mapped_begin, mapped_end };
+                    out_ranges.push_back(mapped_range);
+
+                    if (overlap_begin == input_begin && overlap_end == input_end)
+                    {
+                        it = value.erase(it);
+                        exhausted = true;
+                        break;
+                    }
+                    else if (overlap_begin == input_begin)
+                    {
+                        PropertyRange adjusted_range{ overlap_end, input_end };
+                        *it = adjusted_range;
+                    }
+                    else if (overlap_end == input_end)
+                    {
+                        PropertyRange adjusted_range{ input_begin, overlap_begin };
+                        *it = adjusted_range;
+                    }
+                    else
+                    {
+                        PropertyRange adjusted_range{ input_begin, overlap_begin };
+                        *it = adjusted_range;
+
+                        PropertyRange new_range{ overlap_end, input_end };
+                        it = value.insert(it, new_range);
+                    }
+                }
+            }
+
+            if (!exhausted)
+            {
+                ++it;
             }
         }
-        return value;
+
+        out_ranges.insert(out_ranges.end(), value.begin(), value.end());
+
+        return out_ranges;
     };
-    const auto map_seed_to_location = [&](size_t value)
+    const auto map_seed_to_location = [&](PropertyRange value)
     {
-        return do_mapping(value, Property::Seed, Property::Location);
+        return do_mapping(std::vector{ value }, Property::Seed, Property::Location, do_mapping);
     };
 
-    std::vector locations{ almanac.RequiredSeeds | std::views::transform(map_seed_to_location) | std::ranges::to<std::vector>() };
+    std::vector locations{ almanac.RequiredSeeds | std::views::transform(map_seed_to_location) | std::views::join | std::ranges::to<std::vector>() };
+    std::vector lowest_locations{ locations | std::views::transform(&PropertyRange::Begin) | std::ranges::to<std::vector>() };
 
-    const size_t lowest_location{ algo::min_element(locations) };
+    const size_t lowest_location{ algo::min_element(lowest_locations) };
     fmt::print("The result is: {}", lowest_location);
 
-    return lowest_location != 340994526;
+    return lowest_location != 52210644;
 }

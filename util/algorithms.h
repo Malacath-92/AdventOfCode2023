@@ -79,6 +79,15 @@ constexpr auto accumulate(ContainerT&& container, ValueT&& initial_value = {})
     const auto end_it = get_end(container);
     return std::accumulate(begin_it, end_it, std::forward<ValueT>(initial_value));
 }
+// TODO: Constrain types
+template<range ContainerT, class FunT, class ValueT>
+constexpr auto accumulate(ContainerT&& container, FunT&& binary_predicate, ValueT&& initial_value = {})
+{
+    const auto begin_it = get_begin(container);
+    const auto end_it = get_end(container);
+    return std::accumulate(begin_it, end_it, std::forward<ValueT>(initial_value), std::forward<FunT>(binary_predicate));
+}
+
 template<typename T>
 constexpr T&& min(T&& val)
 {

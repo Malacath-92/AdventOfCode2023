@@ -61,9 +61,6 @@ int main(int argc, char** argv)
             }),
     };
 
-    static constexpr auto to_dead_end{ std::views::filter(
-        [](const auto& entry)
-        { return entry.first == entry.second.Left && entry.first == entry.second.Right; }) };
     static constexpr auto to_start{ std::views::transform([](const auto& entry)
                                                           { return entry.first; }) };
     static constexpr auto to_ghost_start{ std::views::filter([](const auto& start)
@@ -74,10 +71,6 @@ int main(int argc, char** argv)
 
     const auto [directions, crossings_str]{ to_pair(algo::split<"\n\n">(file_data)) };
     const auto crossings{ crossings_str | std::views::split('\n') | to_crossing | to_umap };
-
-    const auto dead_ends{ crossings | to_dead_end | to_start | to_vector };
-    assert(dead_ends.size() == 0);
-    // No dead ends means that every path has to be a loop
 
     std::vector<size_t> cycle_lengths{};
     {

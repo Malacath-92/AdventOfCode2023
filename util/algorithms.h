@@ -390,6 +390,13 @@ constexpr T stoi(std::string_view str)
             }
         }
     };
+    if constexpr (std::is_signed_v<T>)
+    {
+        if (str.starts_with('-'))
+        {
+            return -stoi_impl(str.substr(1), 0, stoi_impl);
+        }
+    }
     return stoi_impl(str, 0, stoi_impl);
 }
 

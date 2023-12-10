@@ -5,7 +5,6 @@
 #include <ranges>
 #include <unordered_map>
 
-#include <Windows.h>
 #include <fmt/format.h>
 
 #include "algorithms.h"
@@ -181,109 +180,76 @@ int main(int argc, char** argv)
 
     while (true)
     {
+        const auto& back{ pipe.back() };
+        const auto next{ next_record(map, back) };
+        if (algo::contains(pipe, &PipeRecord::pos, next.pos))
         {
-            const auto& front{ pipe.front() };
-            const auto next{ next_record(map, front) };
-            if (algo::contains(pipe, &PipeRecord::pos, next.pos))
-            {
-                break;
-            }
-            else
-            {
-                pipe.insert(pipe.begin(), next);
-            }
+            break;
         }
-
+        else
         {
-            const auto& back{ pipe.back() };
-            const auto next{ next_record(map, back) };
-            if (algo::contains(pipe, &PipeRecord::pos, next.pos))
-            {
-                break;
-            }
-            else
-            {
-                pipe.insert(pipe.end(), next);
-            }
+            pipe.insert(pipe.end(), next);
         }
     }
+    pipe.front().distance = pipe.back().distance + 1;
+    pipe.push_back(pipe.front());
+    pipe.erase(pipe.begin());
 
     std::vector<std::string> map_cpy{};
+    std::vector<std::vector<size_t>> map_dist{};
     for (size_t i = 0; i < map.size(); i++)
     {
         map_cpy.push_back(std::string(map.front().size(), ' '));
+        map_dist.push_back(std::vector<size_t>(map.front().size(), 0));
     }
     for (const auto& pipe_elem : pipe)
     {
-        // map_cpy[pipe_elem.pos.y][pipe_elem.pos.x] = 'x';
         map_cpy[pipe_elem.pos.y][pipe_elem.pos.x] = map[pipe_elem.pos.y][pipe_elem.pos.x];
+        map_dist[pipe_elem.pos.y][pipe_elem.pos.x] = pipe_elem.distance;
     }
 
-    while (pipe.front().pos != start_pos)
+    for (size_t i = 0; i < map.size(); i++)
     {
-        auto front{ pipe.front() };
-        front.from = -front.from;
-        pipe.push_back(front);
-        pipe.erase(pipe.begin());
-    }
-    pipe.front().from.dx = static_cast<int64_t>(pipe.back().pos.x) - pipe.front().pos.x;
-    pipe.front().from.dy = static_cast<int64_t>(pipe.back().pos.y) - pipe.front().pos.y;
+        auto& str{ map_cpy[i] };
+        const auto& dist{ map_dist[i] };
+        const auto& dist_up{ map_dist[i > 0 ? i - 1 : map_dist.size() - 1] };
+        const auto& dist_down{ map_dist[i < map_dist.size() - 1 ? i + 1 : 0] };
 
-    static constexpr auto rot_left = [](const auto& dir)
-    {
-        for (size_t i = 0; i < 4; i++)
+        int64_t inside{ 0 };
+        for (size_t j = 0; j < str.size(); j++)
         {
-            if (directions[i] == dir)
+            auto& c{ str[j] };
+            if (c != ' ')
             {
-                return directions[(i + 1) % 4];
+                static const auto max_distance{ static_cast<int64_t>(pipe.back().distance) };
+                auto diff_up{ static_cast<int64_t>(static_cast<int64_t>(dist_up[j]) - dist[j]) };
+                if (std::abs(diff_up) == 1 || )
+                {
+                    inside += diff_up;
+                }
+                else if (std::abs(diff_up) == max_distance)
+                {
+                    inside -= diff_up / max_distance;
+                }
+                auto diff_down{ static_cast<int64_t>(static_cast<int64_t>(dist[j]) - dist_down[j]) };
+                if (std::abs(diff_down) == 1)
+                {
+                    inside += diff_down;
+                }
+                else if (std::abs(diff_down) == max_distance)
+                {
+                    inside -= diff_down / max_distance;
+                }
+            }
+            else if (inside != 0)
+            {
+                c = 'o';
             }
         }
-
-        throw std::logic_error{ "No connection..." };
-    };
-    for (auto& pipe_elem : pipe)
-    {
-        const auto back_dir{ pipe_elem.from };
-        const auto out_dir{ rot_left(back_dir) };
-        const auto out_fwd_dir{ Direction{ out_dir.dx - back_dir.dx, out_dir.dy - back_dir.dy } };
-        const auto in_dir{ -out_dir };
-        const auto in_fwd_dir{ Direction{ in_dir.dx - back_dir.dx, in_dir.dy - back_dir.dy } };
-
-        const auto fill = [&](auto dir, char c)
-        {
-            const int64_t out_x{ static_cast<int64_t>(pipe_elem.pos.x) + dir.dx };
-            const int64_t out_y{ static_cast<int64_t>(pipe_elem.pos.y) + dir.dy };
-            flood_fill(map_cpy, out_x, out_y, c);
-        };
-        fill(out_dir, 'o');
-        fill(in_dir, '+');
     }
 
-    auto to_utf8 = [](const char* input)
-    {
-        wchar_t buffer[2048]{};
-        MultiByteToWideChar(CP_UTF8, 0, input, -1, buffer, 2048);
-        return std::wstring(buffer);
-    };
-
-    std::wstring map_u8;
-    for (const auto& str : map_cpy)
-    {
-        map_u8 += to_utf8(str.data());
-        map_u8 += L'\n';
-    }
-    algo::replace(map_u8, L'-', L'─');
-    algo::replace(map_u8, L'|', L'│');
-    algo::replace(map_u8, L'J', L'┘');
-    algo::replace(map_u8, L'F', L'┌');
-    algo::replace(map_u8, L'L', L'└');
-    algo::replace(map_u8, L'7', L'┐');
-
-    const auto num_enclosed{ algo::count(map_cpy | std::views::join, '+') };
+    const auto num_enclosed{ algo::count(map_cpy | std::views::join, 'o') };
     fmt::print("The result is: {}\n", num_enclosed);
 
-    const auto num_outside{ algo::count(map_cpy | std::views::join, 'o') };
-    fmt::print(" ... or maybe: {}", num_outside);
-
-    return num_enclosed != 6931;
+    return num_enclosed != 357;
 }

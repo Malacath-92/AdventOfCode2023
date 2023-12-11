@@ -223,7 +223,7 @@ int main(int argc, char** argv)
             {
                 static const auto max_distance{ static_cast<int64_t>(pipe.back().distance) };
                 auto diff_up{ static_cast<int64_t>(static_cast<int64_t>(dist_up[j]) - dist[j]) };
-                if (std::abs(diff_up) == 1 || )
+                if (std::abs(diff_up) == 1)
                 {
                     inside += diff_up;
                 }

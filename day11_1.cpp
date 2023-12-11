@@ -35,7 +35,7 @@ int main(int argc, char** argv)
                                     { return c != ' '; }); }) };
     static constexpr auto indices{ std::views::transform(
         [](auto i_and_str)
-        { return std::get<0>(i_and_str); }) };
+        { return static_cast<int64_t>(std::get<0>(i_and_str)); }) };
 
     const std::string_view input_file{ argv[1] };
     const std::string file_data{ algo::replace(algo::read_whole_file(input_file), '.', ' ') };
@@ -55,27 +55,12 @@ int main(int argc, char** argv)
     const std::vector star_map_transpose{ columns(star_map) };
 
     const auto empty_rows{ star_map | std::views::enumerate | filter_non_empty | indices | to_vector };
-    const auto empty_columns{ star_map_transpose | std::views::enumerate | filter_non_empty | indices | std::views::reverse | to_vector };
-
-    std::vector<std::string> star_map_expanded{};
-    for (size_t i = 0; i < star_map.size(); i++)
-    {
-        std::string& row{ star_map_expanded.emplace_back(star_map[i]) };
-        for (size_t j : empty_columns)
-        {
-            row.insert(row.begin() + j, ' ');
-        }
-
-        if (algo::contains(empty_rows, i))
-        {
-            star_map_expanded.push_back(row);
-        }
-    }
+    const auto empty_cols{ star_map_transpose | std::views::enumerate | filter_non_empty | indices | std::views::reverse | to_vector };
 
     std::vector<Position> stars{};
-    for (size_t i = 0; i < star_map_expanded.size(); i++)
+    for (size_t i = 0; i < star_map.size(); i++)
     {
-        const std::string& row{ star_map_expanded[i] };
+        const std::string_view& row{ star_map[i] };
         for (size_t j = 0; j < row.size(); j++)
         {
             if (row[j] == '#')
@@ -94,11 +79,25 @@ int main(int argc, char** argv)
         }
     }
 
-    static constexpr auto to_distances{ std::views::transform(
-        [](const auto& star_pair)
+    const auto to_distances{ std::views::transform(
+        [&](const auto& star_pair)
         {
             const auto& [lhs, rhs] = star_pair;
-            return std::abs(lhs.x - rhs.x) + std::abs(lhs.y - rhs.y);
+            const auto lhs_x{ std::min(lhs.x, rhs.x) };
+            const auto lhs_y{ std::min(lhs.y, rhs.y) };
+            const auto rhs_x{ std::max(lhs.x, rhs.x) };
+            const auto rhs_y{ std::max(lhs.y, rhs.y) };
+            const auto empty_rows_within{ empty_rows | std::views::filter([&](int64_t row)
+                                                                          { return row > lhs_x && row < rhs_x; }) |
+                                          to_vector };
+            const auto empty_cols_within{ empty_cols | std::views::filter([&](int64_t row)
+                                                                          { return row > lhs_y && row < rhs_y; }) |
+                                          to_vector };
+            const auto n_rows{ static_cast<int64_t>(empty_rows_within.size()) };
+            const auto n_cols{ static_cast<int64_t>(empty_cols_within.size()) };
+
+            static constexpr int64_t expansion_rate{ 2 };
+            return (rhs_x - lhs_x + rhs_y - lhs_y) + n_rows * (expansion_rate - 1) + n_cols * (expansion_rate - 1);
         }) };
     const std::vector distances{ star_pairs | to_distances | to_vector };
 

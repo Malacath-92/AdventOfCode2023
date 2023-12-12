@@ -26,7 +26,6 @@ struct BrokenSpringSegment
 struct BrokenSpringMap
 {
     std::string_view DirectMap;
-    std::vector<BrokenSpringSegment> ReducedMap;
     std::vector<int64_t> RangeMap;
 };
 
@@ -62,26 +61,6 @@ int main(int argc, char** argv)
                                                             { return str.front() == '#'; }) };
     static constexpr auto sizes{ std::views::transform([](auto str)
                                                        { return static_cast<int64_t>(str.size()); }) };
-    static constexpr auto to_segments = [](auto str)
-    {
-        return str |
-               chunk_blocks |
-               to_string_views |
-               std::views::transform(
-                   [](auto str)
-                   {
-                       switch (str[0])
-                       {
-                       case '.':
-                           return BrokenSpringSegment{ SpringState::Intact, static_cast<int64_t>(str.size()) };
-                       case '#':
-                           return BrokenSpringSegment{ SpringState::Broken, static_cast<int64_t>(str.size()) };
-                       default:
-                           return BrokenSpringSegment{ SpringState::Unknown, static_cast<int64_t>(str.size()) };
-                       }
-                   }) |
-               to_vector;
-    };
     static constexpr auto to_numbers = [](auto str)
     {
         return str |
@@ -92,7 +71,7 @@ int main(int argc, char** argv)
     };
     static constexpr auto to_map{ std::views::transform(
         [](const auto& pair_entry)
-        { return BrokenSpringMap{ pair_entry.first, to_segments(pair_entry.first), to_numbers(pair_entry.second) }; }) };
+        { return BrokenSpringMap{ pair_entry.first, to_numbers(pair_entry.second) }; }) };
     static constexpr auto state_to_char = [](auto state)
     {
         switch (state)

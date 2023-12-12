@@ -23,29 +23,13 @@ struct BrokenSpringMap
     std::vector<size_t> RangeMap;
 };
 
-// WHY THIS NO WORK????
-// using MemoizationRangesContainer = std::span<const size_t>;
-using MemoizationRangesContainer = std::vector<size_t>;
+using MemoizationRangesContainer = std::span<const size_t>;
 using MemoizationKey = std::pair<std::string, MemoizationRangesContainer>;
 
 template<class T>
 struct std::hash<std::span<const T>>
 {
     std::size_t operator()(const std::span<const T>& s) const noexcept
-    {
-        size_t seed = 0;
-        std::hash<T> hasher{};
-        for (const T& i : s)
-        {
-            seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed;
-    }
-};
-template<class T>
-struct std::hash<std::vector<T>>
-{
-    std::size_t operator()(const std::vector<T>& s) const noexcept
     {
         size_t seed = 0;
         std::hash<T> hasher{};
@@ -73,7 +57,7 @@ struct std::equal_to<std::span<T>>
 {
     bool operator()(const std::span<T>& lhs, const std::span<T>& rhs) const noexcept
     {
-        return lhs.size() == rhs.size() && std::memcmp(lhs.data(), rhs.data(), lhs.size_bytes());
+        return lhs.size() == rhs.size() && std::memcmp(lhs.data(), rhs.data(), lhs.size_bytes()) == 0;
     }
 };
 template<>
@@ -170,7 +154,7 @@ int main(int argc, char** argv)
         fmt::print("{}\n", map_line.DirectMap);
         const auto num_legal = [&](this const auto& self,
                                    std::string_view map,
-                                   const std::vector<size_t>& ranges) -> size_t
+                                   std::span<const size_t> ranges) -> size_t
         {
             map = algo::trim(map, '.');
 
@@ -214,9 +198,7 @@ int main(int argc, char** argv)
                 else
                 {
                     // ranges.front() + 1 to skip the separating '.'
-                    auto new_ranges{ ranges };
-                    new_ranges.erase(new_ranges.begin());
-                    result = self(map.substr(ranges.front() + 1), new_ranges);
+                    result = self(map.substr(ranges.front() + 1), ranges.subspan(1));
                 }
             }
             else if (map.starts_with('?'))

@@ -103,11 +103,10 @@ int main(int argc, char** argv)
             hypothetical_map.push_back(BrokenSpringSegment{ SpringState::Intact, 1 });
         }
 
+        fmt::print("{}\n", map_line.DirectMap);
+
         // get first permuation
-        while (std::next_permutation(hypothetical_map.begin(), hypothetical_map.end()))
-        {
-            /* spin */;
-        }
+        algo::sort(hypothetical_map);
 
         static constexpr auto flatten = [](const auto& hypothetical_map, size_t out_size)
         {
@@ -117,12 +116,8 @@ int main(int argc, char** argv)
             {
                 flattened.append(std::string(range.Size, state_to_char(range.State)));
             }
-            if (flattened.find('?') != std::string::npos)
-                __debugbreak();
             return flattened;
         };
-
-        fmt::print("{}\n", map_line.DirectMap);
 
         // for each permuation
         while (std::next_permutation(hypothetical_map.begin(), hypothetical_map.end()))

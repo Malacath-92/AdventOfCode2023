@@ -59,7 +59,8 @@ int main(int argc, char** argv)
         std::vector<std::vector<char>> found_col_a{};
         std::vector<std::vector<char>> found_col_b{};
 
-        static constexpr auto equal = [](const auto& top, const auto& bot) {
+        static constexpr auto equal = [](const auto& top, const auto& bot)
+        {
             bool has_error{ false };
             for (auto [trow, brow] : std::views::zip(top, bot))
             {
@@ -203,5 +204,5 @@ int main(int argc, char** argv)
     const size_t sum_of_notes{ algo::accumulate(cols, size_t{ 0 }) + 100 * algo::accumulate(rows, size_t{ 0 }) };
     fmt::print("The result is: {}", sum_of_notes);
 
-    return sum_of_notes != 33122;
+    return sum_of_notes != 32312;
 }

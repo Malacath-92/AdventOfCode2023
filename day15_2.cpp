@@ -110,5 +110,5 @@ int main(int argc, char** argv)
     }
 
     fmt::print("The result is: {}", total_lens_power);
-    return total_lens_power != 521434;
+    return total_lens_power != 248279;
 }

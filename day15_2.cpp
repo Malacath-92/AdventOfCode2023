@@ -90,7 +90,7 @@ int main(int argc, char** argv)
         {
             algo::erase(box.Lenses, &Lens::Label, inst.Label);
         }
-        else if (Lens* lens{ algo::find(box.Lenses, &Lens::Label, inst.Label) })
+        else if (Lens * lens{ algo::find(box.Lenses, &Lens::Label, inst.Label) })
         {
             lens->FocalLength = inst.FocalLength;
         }

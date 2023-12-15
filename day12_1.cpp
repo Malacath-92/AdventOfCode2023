@@ -2,6 +2,8 @@
 
 #include <cctype>
 #include <ranges>
+#include <tuple>
+#include <unordered_map>
 
 #include <fmt/format.h>
 
@@ -15,18 +17,10 @@ enum class SpringState
     Unknown,
 };
 
-struct BrokenSpringSegment
-{
-    SpringState State;
-    int64_t Size;
-
-    std::weak_ordering operator<=>(const BrokenSpringSegment&) const = default;
-};
-
 struct BrokenSpringMap
 {
     std::string_view DirectMap;
-    std::vector<int64_t> RangeMap;
+    std::vector<size_t> RangeMap;
 };
 
 int main(int argc, char** argv)
@@ -53,20 +47,20 @@ int main(int argc, char** argv)
         [](auto str)
         { return std::string_view(str.data(), str.size()); }) };
     static constexpr auto split_lines{ std::views::transform(
-        [](auto str)
+        [](const auto& str)
         { return to_pair(str | std::views::split(' ') | to_string_views); }) };
     static constexpr auto chunk_blocks{ std::views::chunk_by([](char l, char r)
                                                              { return l == r; }) };
-    static constexpr auto filter_broken{ std::views::filter([](auto str)
+    static constexpr auto filter_broken{ std::views::filter([](const auto& str)
                                                             { return str.front() == '#'; }) };
-    static constexpr auto sizes{ std::views::transform([](auto str)
-                                                       { return static_cast<int64_t>(str.size()); }) };
-    static constexpr auto to_numbers = [](auto str)
+    static constexpr auto sizes{ std::views::transform([](const auto& str)
+                                                       { return static_cast<size_t>(str.size()); }) };
+    static constexpr auto to_numbers = [](const auto& str)
     {
         return str |
                std::views::split(',') |
                to_string_views |
-               std::views::transform(&algo::stoi<int64_t>) |
+               std::views::transform(&algo::stoi<size_t>) |
                to_vector;
     };
     static constexpr auto to_map{ std::views::transform(
@@ -93,60 +87,62 @@ int main(int argc, char** argv)
     size_t number_configuration{ 0 };
     for (const auto& map_line : map)
     {
-        std::vector<BrokenSpringSegment> hypothetical_map;
-        for (const auto& range : map_line.RangeMap)
-        {
-            hypothetical_map.push_back(BrokenSpringSegment{ SpringState::Broken, range });
-        }
-        for (size_t i = 0; i < map_line.DirectMap.size() - algo::accumulate(map_line.RangeMap, size_t{ 0 }); i++)
-        {
-            hypothetical_map.push_back(BrokenSpringSegment{ SpringState::Intact, 1 });
-        }
-
         fmt::print("{}\n", map_line.DirectMap);
-
-        // get first permuation
-        algo::sort(hypothetical_map);
-
-        static constexpr auto flatten = [](const auto& hypothetical_map, size_t out_size)
+        const auto num_legal = [&](this const auto& self,
+                                   std::string_view map,
+                                   std::span<const size_t> ranges) -> size_t
         {
-            std::string flattened;
-            flattened.reserve(out_size);
-            for (const auto& range : hypothetical_map)
+            map = algo::trim(map, '.');
+
+            if (map.empty())
             {
-                flattened.append(std::string(range.Size, state_to_char(range.State)));
+                return ranges.empty() ? 1 : 0;
             }
-            return flattened;
+
+            if (ranges.empty())
+            {
+                return algo::contains(map, '#') ? 0 : 1;
+            }
+
+            size_t result{};
+            if (map.starts_with('#'))
+            {
+                if (map.size() < ranges.front())
+                {
+                    result = 0; // string can't possibly fit the first range
+                }
+                else if (algo::contains(map.substr(0, ranges.front()), '.'))
+                {
+                    result = 0; // the part that should be all '#' or '?' contains '.'
+                }
+                // at this point the string is only '#' and '?'
+                else if (map.size() == ranges.front())
+                {
+                    result = ranges.size() == 1 ? 1 : 0; // contains exactly the spring
+                }
+                else if (map[ranges.front()] == '#')
+                {
+                    result = 0; // the symbol after this hypothetical spring has to be '.' or '?'
+                }
+                else
+                {
+                    // ranges.front() + 1 to skip the separating '.'
+                    result = self(map.substr(ranges.front() + 1), ranges.subspan(1));
+                }
+            }
+            else if (map.starts_with('?'))
+            {
+                // replace for '?' once with '.' (omitted) and once with '#'
+                result = self(map.substr(1), ranges) +
+                         self('#' + std::string{ map.substr(1) }, ranges);
+            }
+
+            return result;
         };
 
-        // for each permuation
-        while (std::next_permutation(hypothetical_map.begin(), hypothetical_map.end()))
-        {
-            static constexpr auto verify = [](const auto& expected, const auto& expected_sizes, const auto& hypothetical)
-            {
-                const auto chunks{ hypothetical | chunk_blocks | filter_broken | sizes | to_vector };
-                if (chunks != expected_sizes)
-                {
-                    return false;
-                }
-
-                for (auto [e, h] : std::views::zip(expected, hypothetical))
-                {
-                    if (e != h && e != '?')
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            };
-
-            const auto flattened{ flatten(hypothetical_map, map_line.DirectMap.size()) };
-            if (verify(map_line.DirectMap, map_line.RangeMap, flattened))
-            {
-                fmt::print("\t{}\n", flattened);
-                number_configuration++;
-            }
-        }
+        const size_t result{ num_legal(map_line.DirectMap, map_line.RangeMap) };
+        fmt::print("\t{}\n", result);
+        number_configuration += result;
     }
 
     fmt::print("The result is: {}", number_configuration);

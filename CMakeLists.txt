@@ -107,6 +107,8 @@ target_include_directories(aoc_util PUBLIC
 file(GLOB aoc_main_files CONFIGURE_DEPENDS "*.cpp")
 foreach(main_file ${aoc_main_files})
     get_filename_component(main_file_name ${main_file} NAME_WE)
+	string(FIND ${main_file_name} "_" underscore_pos)
+	string(SUBSTRING ${main_file_name} 0 ${underscore_pos} input_file_name)
     add_executable(${main_file_name} ${main_file})
     target_link_libraries(${main_file_name} PRIVATE
         aoc_haxx
@@ -117,10 +119,10 @@ foreach(main_file ${aoc_main_files})
         aoc_util)
 	set_target_properties(${main_file_name} PROPERTIES
 		VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		VS_DEBUGGER_COMMAND_ARGUMENTS "inputs/${main_file_name}.txt")
+		VS_DEBUGGER_COMMAND_ARGUMENTS "inputs/${input_file_name}.txt")
     add_test(
 		NAME ${main_file_name}
-		COMMAND ${main_file_name} "inputs/${main_file_name}.txt"
+		COMMAND ${main_file_name} "inputs/${input_file_name}.txt"
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endforeach()
 

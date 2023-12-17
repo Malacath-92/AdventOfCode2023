@@ -22,15 +22,20 @@ int main(int argc, char** argv)
     static constexpr auto to_string_views{ std::views::transform(
         [](auto str)
         { return std::string_view(str.data(), str.size()); }) };
-    static constexpr auto char_to_int = [](char c)
-    {
-        return c - '0';
-    };
+    static constexpr auto to_numbers{ std::views::transform([](std::string_view str)
+                                                            {
+        static constexpr auto char_to_int = [](auto c) -> size_t
+        {
+            return c - '0';
+        };
+        return str |
+               std::views::transform(char_to_int) |
+               to_vector; }) };
 
     const std::string_view input_file{ argv[1] };
     const std::string file_data{ algo::read_whole_file(input_file) };
 
-    const std::vector city{ file_data | lines | to_string_views | to_vector };
+    const std::vector city{ file_data | lines | to_string_views | to_numbers | to_vector };
 
     struct Vec2
     {
@@ -124,7 +129,7 @@ int main(int argc, char** argv)
                 return;
             }
 
-            h += char_to_int(city[p.X][p.Y]);
+            h += city[p.X][p.Y];
             payloads.push(Payload{ h, p, d, n });
         };
 

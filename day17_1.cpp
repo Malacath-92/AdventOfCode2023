@@ -58,7 +58,6 @@ int main(int argc, char** argv)
         Vec2 Position;
         Vec2 Direction;
         size_t NumForward;
-        std::vector<Vec2> Path;
 
         auto operator<=>(const Payload&) const = default;
     };
@@ -72,32 +71,6 @@ int main(int argc, char** argv)
                y < city_min.Y ||
                x >= city_max.X ||
                y >= city_max.Y;
-    };
-
-    const auto print_path = [&](const auto& path)
-    {
-        size_t heat_loss{ 0 };
-        std::string path_str{};
-        for (int64_t x = 0; x < city_max.X; x++)
-        {
-            for (int64_t y = 0; y < city_max.Y; y++)
-            {
-                if (algo::contains(path, Vec2{ x, y }))
-                {
-                    const char num{ city[x][y] };
-                    path_str += num;
-                    heat_loss += char_to_int(num);
-                }
-                else
-                {
-                    path_str += '.';
-                }
-            }
-            path_str += '\n';
-        }
-        heat_loss -= char_to_int(city[0][0]);
-        fmt::print("{}", path_str);
-        fmt::print("Heat Loss: {}\n\n", heat_loss);
     };
 
     struct Visited
@@ -114,7 +87,6 @@ int main(int argc, char** argv)
     payloads.push({ 0, { 0, 0 }, { 0, 1 }, 0 });
 
     std::optional<size_t> minimum_heatloss{ std::nullopt };
-    std::optional<std::vector<Vec2>> minimum_path{ std::nullopt };
     while (!payloads.empty())
     {
         const Payload payload{ payloads.top() };
@@ -140,12 +112,11 @@ int main(int argc, char** argv)
             if (!minimum_heatloss.has_value() || payload.HeatLoss < minimum_heatloss.value())
             {
                 minimum_heatloss = payload.HeatLoss;
-                minimum_path = payload.Path;
             }
             continue;
         }
 
-        const auto push = [&](Vec2 p, Vec2 d, size_t h, size_t n, std::vector<Vec2> pp)
+        const auto push = [&](Vec2 p, Vec2 d, size_t h, size_t n)
         {
             p = p + d;
             if (out_of_bounds(p))
@@ -153,26 +124,20 @@ int main(int argc, char** argv)
                 return;
             }
 
-            pp.push_back(p);
             h += char_to_int(city[p.X][p.Y]);
-            payloads.push(Payload{ h, p, d, n, std::move(pp) });
+            payloads.push(Payload{ h, p, d, n });
         };
 
         if (payload.NumForward < 3)
         {
-            push(payload.Position, payload.Direction, payload.HeatLoss, payload.NumForward + 1, payload.Path);
+            push(payload.Position, payload.Direction, payload.HeatLoss, payload.NumForward + 1);
         }
 
-        push(payload.Position, payload.Direction.rot_left(), payload.HeatLoss, 1, payload.Path);
-        push(payload.Position, payload.Direction.rot_right(), payload.HeatLoss, 1, payload.Path);
-    }
-
-    if (minimum_path.has_value())
-    {
-        print_path(minimum_path.value());
+        push(payload.Position, payload.Direction.rot_left(), payload.HeatLoss, 1);
+        push(payload.Position, payload.Direction.rot_right(), payload.HeatLoss, 1);
     }
 
     fmt::print("The result is: {}", minimum_heatloss.value_or(0));
 
-    return minimum_heatloss.value() != 7728;
+    return minimum_heatloss.value_or(0) != 843;
 }

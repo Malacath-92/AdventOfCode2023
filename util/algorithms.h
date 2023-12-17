@@ -305,17 +305,17 @@ constexpr auto sorted(ContainerT&& container)
     return copy;
 }
 template<range ContainerT, range_element_invocable_r<ContainerT, bool> FunT>
-constexpr auto sort(ContainerT&& container, FunT&& fun)
+constexpr auto sorted(ContainerT&& container, FunT&& fun)
 {
     auto copy{ std::forward<ContainerT>(container) };
-    algo::sort(copy, std::forward<FunT>(fun));
+    algo::sorted(copy, std::forward<FunT>(fun));
     return copy;
 }
 template<range ContainerT, range_element_invocable<ContainerT> FunT>
-constexpr auto sort_by_member(ContainerT&& container, FunT&& fun)
+constexpr auto sorted_by_member(ContainerT&& container, FunT&& fun)
 {
     auto copy{ std::forward<ContainerT>(container) };
-    algo::sort(copy, std::forward<FunT>(fun));
+    algo::sort_by_member(copy, std::forward<FunT>(fun));
     return copy;
 }
 

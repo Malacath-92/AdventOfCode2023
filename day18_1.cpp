@@ -237,7 +237,6 @@ int main(int argc, char** argv)
         }
     }
 
-
     const int64_t total_volume{ algo::count(pool | std::views::join, '0') };
     fmt::print("The result is: {}", total_volume);
     return total_volume != 40714;

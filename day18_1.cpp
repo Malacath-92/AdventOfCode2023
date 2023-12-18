@@ -232,31 +232,13 @@ int main(int argc, char** argv)
             }
             else if (inside != 0)
             {
-                c = 'O';
+                c = '0';
             }
         }
     }
 
-    {
-        std::string str;
-        for (size_t i = 0; i < pool.size(); i++)
-        {
-            const std::string_view orig_row{ pool[i].data(), pool[i].size() };
-            str += fmt::format("{}\n", orig_row);
-        }
-        fmt::print("{}\n", str);
-    }
-    {
-        std::string str;
-        for (size_t i = 0; i < border.size(); i++)
-        {
-            const std::string_view orig_row{ border[i].data(), border[i].size() };
-            str += fmt::format("{}\n", orig_row);
-        }
-        fmt::print("{}\n", str);
-    }
 
-    const int64_t total_volume{ algo::count(pool | std::views::join, '0') + algo::count(pool | std::views::join, 'O') };
+    const int64_t total_volume{ algo::count(pool | std::views::join, '0') };
     fmt::print("The result is: {}", total_volume);
-    return total_volume != 843;
+    return total_volume != 40714;
 }

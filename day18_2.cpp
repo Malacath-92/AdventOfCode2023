@@ -88,140 +88,57 @@ int main(int argc, char** argv)
         [](auto str)
         { return std::string_view(str.data(), str.size()); }) };
 
-    //static constexpr auto to_direction =
-    //    [](char c)
-    //{
-    //    using enum Direction;
-    //    switch (c)
-    //    {
-    //    case 'R':
-    //        return Right;
-    //    case 'L':
-    //        return Left;
-    //    case 'D':
-    //        return Down;
-    //    case 'U':
-    //    default:
-    //        return Up;
-    //    }
-    //};
-    //static constexpr auto to_instructions{ std::views::transform(
-    //    [](auto str)
-    //    {
-    //        const std::vector parts{ str | std::views::split(' ') | to_string_views | to_vector };
-
-    //        return Instruction{
-    //            to_direction(parts[0][0]),
-    //            algo::stoi<int64_t>(parts[1]),
-    //        };
-    //    }) };
-     static constexpr auto to_direction =
-         [](char c)
+    static constexpr auto to_direction =
+        [](char c)
     {
-         return static_cast<Direction>(c - '0');
-     };
-     static constexpr auto to_instructions{ std::views::transform(
-         [](auto str)
-         {
-             using namespace std::string_view_literals;
-             const std::vector parts{ str | std::views::split(' ') | to_string_views | to_vector };
-             const std::string_view col{ algo::trim(parts[2], "#()"sv) };
-             // Should be using from_chars or make my own stoi taking a base, but time is of the essence
-             uint32_t dist{ std::stoul(std::string{ col.substr(0, 5) }, nullptr, 16) };
-    
-             return Instruction{
-                 to_direction(col.back()),
-                 dist,
-             };
-         }) };
+        return static_cast<Direction>(c - '0');
+    };
+    static constexpr auto to_instructions{ std::views::transform(
+        [](auto str)
+        {
+            using namespace std::string_view_literals;
+            const std::vector parts{ str | std::views::split(' ') | to_string_views | to_vector };
+            const std::string_view col{ algo::trim(parts[2], "#()"sv) };
+            // Should be using from_chars or make my own stoi taking a base, but time is of the essence
+            uint32_t dist{ std::stoul(std::string{ col.substr(0, 5) }, nullptr, 16) };
+            return Instruction{
+                to_direction(col.back()),
+                dist,
+            };
+        }) };
 
     const std::string_view input_file{ argv[1] };
     const std::string file_data{ algo::read_whole_file(input_file) };
 
     const std::vector instructions{ file_data | lines | to_string_views | to_instructions | to_vector };
 
-    std::vector<Segment> outline;
-    Vec2 min{ 0, 0 };
-    Vec2 max{ 0, 0 };
+    std::vector<Vec2> vertices;
+    int64_t on_edge{ 0 };
 
     {
         Vec2 current_pos{ 0, 0 };
         for (const auto& inst : instructions)
         {
             const Vec2 next_pos{ current_pos + c_Directions[size_t(inst.Dir)] * inst.Dist };
-            outline.push_back({ current_pos, next_pos });
+            vertices.push_back(next_pos);
+            on_edge += inst.Dist;
             current_pos = next_pos;
-
-            min.X = std::min(current_pos.X, min.X);
-            min.Y = std::min(current_pos.Y, min.Y);
-            max.X = std::max(current_pos.X, max.X);
-            max.Y = std::max(current_pos.Y, max.Y);
         }
     }
 
-    int64_t total_volume{ 0 };
-    for (int64_t y = min.Y; y <= max.Y; y++)
+    static constexpr auto area_by_shoelace = [](const auto& vertices)
     {
-        std::set<Intersection> intersections{};
-        for (const auto& out : outline)
+        int64_t area{ 0 };
+        size_t j{ vertices.size() - 1 };
+        for (size_t i = 0; i < vertices.size(); i++)
         {
-            const Vec2 out_min{ std::min(out.From.X, out.To.X), std::min(out.From.Y, out.To.Y) };
-            const Vec2 out_max{ std::max(out.From.X, out.To.X), std::max(out.From.Y, out.To.Y) };
-            if (out_min.X == out_max.X && out_min.Y <= y && out_max.Y >= y)
-            {
-                char c;
-                if (y != out_min.Y && y != out_max.Y)
-                {
-                    c = out_min.Y == out.From.Y ? 'V' : 'A';
-                }
-                else
-                {
-                    c = out_min.Y == out.From.Y ? 'Y' : '^';
-                }
-                intersections.insert({ out_min.X, c });
-            }
+            area += (vertices[j].X + vertices[i].X) * (vertices[j].Y - vertices[i].Y);
+            j = i;
         }
+        return std::abs(area / 2);
+    };
 
-        int64_t current_x{ min.X };
-        int64_t inside{ false };
-        std::optional<Segment> prev_seg{};
-        for (auto [x, c] : intersections)
-        {
-            Segment seg{ Vec2{ current_x, y }, Vec2{ x, y } };
-            if (inside != 0)
-            {
-                const bool no_double_count{ prev_seg.has_value() && prev_seg->To == seg.From };
-                prev_seg = seg;
-                const int64_t add{ x - current_x + (no_double_count ? 0 : 1) };
-                total_volume += add;
-            }
-            else
-            {
-                prev_seg.reset();
-            }
-
-            switch (c)
-            {
-            case 'A':
-                inside -= 2;
-                break;
-            case '^':
-                inside -= 1;
-                break;
-            case 'V':
-                inside += 2;
-                break;
-            case 'Y':
-                inside += 1;
-                break;
-            default:
-                break;
-            }
-
-            current_x = x;
-        }
-    }
-
+    const int64_t total_volume{ area_by_shoelace(vertices) + on_edge / 2 + 1 };
     fmt::print("The result is: {}", total_volume);
     return total_volume != 129849166997110;
 }

@@ -478,6 +478,11 @@ constexpr std::string_view trim(std::string_view str, char to_trim)
     return trim(str, [=](char c)
                 { return c == to_trim; });
 }
+constexpr std::string_view trim(std::string_view str, std::string_view to_trim)
+{
+    return trim(str, [=](char c)
+                { return to_trim.contains(c); });
+}
 
 constexpr bool case_insensitive_equal(std::string_view lhs, std::string_view rhs)
 {

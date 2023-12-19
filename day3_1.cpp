@@ -41,7 +41,7 @@ int main(int argc, char** argv)
             is_symbol,
             '*'),
     };
-    const std::vector schematic{ algo::split<'\n', std::string>(file_data) };
+    const std::vector schematic{ algo::split<'\n', TokenizeBehavior::None, std::string>(file_data) };
 
     static constexpr auto is_adjacent_symbol = [](const std::vector<std::string>& schematic, size_t i, size_t j)
     {

@@ -272,5 +272,5 @@ int main(int argc, char** argv)
 
     const size_t num_signals_sent{ total_low_signals * total_high_signals };
     fmt::print("The result is: {}", num_signals_sent);
-    return num_signals_sent != 374873;
+    return num_signals_sent != 898557000;
 }

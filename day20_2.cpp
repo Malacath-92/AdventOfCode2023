@@ -143,6 +143,8 @@ int main(int argc, char** argv)
     const std::string file_data{ algo::read_whole_file(input_file) };
 
     ModuleMap modules{ file_data | lines | to_string_views | to_modules | to_unordered_map };
+
+    // Resolve inputs to conjunction modules
     for (auto& [name, mod] : modules)
     {
         for (auto out : mod.Outputs)
@@ -160,8 +162,8 @@ int main(int argc, char** argv)
         }
     }
 
-    // We have 4 sub-trees, starting at xk, cn, rj, gf 
-    //                     if we ignore rz, mr, kv, jg respectively
+    // We have 4 sub-trees, starting at xk, cn, rj, gf
+    //          if we ignore outputs of rz, mr, kv, jg respectively
     struct SubTree
     {
         std::string_view Root;
@@ -174,6 +176,7 @@ int main(int argc, char** argv)
         SubTree{ "gf", "jg" },
     };
 
+    // Find the loops for each subtree
     struct SubtreeLoops
     {
         size_t Start;
@@ -207,19 +210,23 @@ int main(int argc, char** argv)
         build_subtree(root);
 
         std::vector<ModuleStateList> seen_states;
-        size_t cycle_start{ 0 };
-        size_t cycle_len{ 0 };
+        size_t loop_start{ 0 };
+        size_t loop_len{ 0 };
         while (true)
         {
-            ModuleStateList states{ subtree | std::views::transform(to_full_module_state) | to_vector };
-            if (const ModuleStateList * old{ algo::find(seen_states, states) })
             {
-                cycle_start = static_cast<size_t>(old - &seen_states.front());
-                cycle_len = static_cast<size_t>(seen_states.size() - cycle_start);
-                break;
+                // Detect loop
+                ModuleStateList states{ subtree | std::views::transform(to_full_module_state) | to_vector };
+                if (const ModuleStateList * old{ algo::find(seen_states, states) })
+                {
+                    loop_start = static_cast<size_t>(old - &seen_states.front());
+                    loop_len = static_cast<size_t>(seen_states.size() - loop_start);
+                    break;
+                }
+                seen_states.push_back(states);
             }
-            seen_states.push_back(states);
 
+            // Enter the subtree by sending the low pulse from the broadcaster
             PendingSignalList pending_signals{ { "broadcaster", root, Signal::Low } };
             while (!pending_signals.empty())
             {
@@ -230,19 +237,13 @@ int main(int argc, char** argv)
                     using enum Signal;
                     using enum ModuleState;
 
-                    // Sometimes we send signals into the void
+                    // Sometimes we send signals into the void, these are output-only nodes
                     auto it{ subtree.find(to) };
                     if (it != subtree.end())
                     {
                         auto& to_mod{ it->second };
                         switch (to_mod.Type)
                         {
-                        case Input:
-                            for (auto& out : to_mod.Outputs)
-                            {
-                                next_signals.push_back({ to, out, signal });
-                            }
-                            break;
                         case FlipFlop:
                             if (signal == Low)
                             {
@@ -264,18 +265,22 @@ int main(int argc, char** argv)
                                     last_sig = signal;
                                 }
                             }
-                            const auto state{ to_module_state(to_mod) };
-                            if (to == output && prev_state != state)
-                            {
-                                fmt::print("{} from {} to {} @{}\n", output, prev_state == On ? "ON" : "OFF", state == On ? "ON" : "OFF", seen_states.size());
-                            }
-                            const auto out_sig{ state == On ? Low : High };
+                            const auto next_state{ to_module_state(to_mod) };
+                            const auto out_sig{ next_state == On ? Low : High };
                             for (auto& out : to_mod.Outputs)
                             {
                                 next_signals.push_back({ to, out, out_sig });
                             }
+
+                            if (to == output && prev_state != next_state)
+                            {
+                                // Printing to verify that this switches at the end of the loop
+                                fmt::print("{} from {} to {} @{}\n", output, prev_state == On ? "ON" : "OFF", next_state == On ? "ON" : "OFF", seen_states.size());
+                            }
                             break;
                         }
+                        case Input:
+                            // No input nodes in the subtrees, cleans up code
                         case Output:
                         default:
                             break;
@@ -287,10 +292,13 @@ int main(int argc, char** argv)
             }
         }
 
-        fmt::print("Subtree @{} cycles from {} with cycle length {}\n", root, cycle_start, cycle_len);
-        loops.push_back({ cycle_start, cycle_len });
+        // Printing to verify that loops start out at 0
+        fmt::print("Subtree @{} loops from {} with loop length {}\n", root, loop_start, loop_len);
+        loops.push_back({ loop_start, loop_len });
     }
 
+    // Get the loop for the combined tree
+    // Note: This breaks for the loops don't start at 0
     size_t num_buttons_needed{ loops[0].Length };
     for (auto loop : loops | std::views::drop(1))
     {

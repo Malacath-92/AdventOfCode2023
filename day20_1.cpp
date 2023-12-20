@@ -165,20 +165,8 @@ int main(int argc, char** argv)
     std::vector<int64_t> low_signals_per_press;
     std::vector<int64_t> high_signals_per_press;
 
-    std::vector<ModuleStateList> seen_states;
-    size_t cycle_start{ 0 };
-    size_t cycle_len{ c_NumberPresses };
-    while (true)
+    for (size_t i = 0; i < c_NumberPresses; i++)
     {
-        ModuleStateList states{ modules | std::views::transform(to_full_module_state) | to_vector };
-        if (const ModuleStateList * old{ algo::find(seen_states, states) })
-        {
-            cycle_start = static_cast<size_t>(old - &seen_states.front());
-            cycle_len = static_cast<size_t>(seen_states.size() - cycle_start);
-            break;
-        }
-        seen_states.push_back(states);
-
         int64_t low_signals{ 0 };
         int64_t high_signals{ 0 };
         const auto count_signals = [&](Signal sig, auto num)
@@ -256,19 +244,8 @@ int main(int argc, char** argv)
         high_signals_per_press.push_back(high_signals);
     }
 
-    const size_t first_batch{};
-    const size_t middle_batch{ ((c_NumberPresses - first_batch) / cycle_len) * cycle_len };
-    const size_t leftover_batch{ c_NumberPresses - first_batch - middle_batch };
-    const size_t total_low_signals{
-        algo::accumulate(low_signals_per_press | std::views::take(first_batch), size_t{ 0 }) +
-        algo::accumulate(low_signals_per_press | std::views::drop(first_batch), size_t{ 0 }) * middle_batch / cycle_len +
-        algo::accumulate(low_signals_per_press | std::views::reverse | std::views::take(leftover_batch), size_t{ 0 })
-    };
-    const size_t total_high_signals{
-        algo::accumulate(high_signals_per_press | std::views::take(first_batch), size_t{ 0 }) +
-        algo::accumulate(high_signals_per_press | std::views::drop(first_batch), size_t{ 0 }) * middle_batch / cycle_len +
-        algo::accumulate(high_signals_per_press | std::views::reverse | std::views::take(leftover_batch), size_t{ 0 })
-    };
+    const size_t total_low_signals{ algo::accumulate(low_signals_per_press, size_t{ 0 }) };
+    const size_t total_high_signals{ algo::accumulate(high_signals_per_press, size_t{ 0 }) };
 
     const size_t num_signals_sent{ total_low_signals * total_high_signals };
     fmt::print("The result is: {}", num_signals_sent);

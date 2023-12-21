@@ -87,10 +87,12 @@ int main(int argc, char** argv)
     {
         const auto& [x, y] = coord;
         const auto& [X, Y] = garden_max;
+        auto [nx, ny] = coord;
+
         return std::pair{
             Vec2{
-                (x % X + X) % X,
-                (y % Y + Y) % Y,
+                ((nx %= X) < 0) ? nx + X : nx,
+                ((ny %= Y) < 0) ? ny + Y : ny,
             },
             Vec2{
                 (x + (x < 0 ? 1 : 0)) / X - (x < 0 ? 1 : 0),
@@ -99,9 +101,9 @@ int main(int argc, char** argv)
         };
     };
 
-    using WrappingTile = std::set<Vec2>;
+    using WrappingTile = std::array<std::array<bool, 9>, 9>;
     std::vector steps(garden_max.Y, std::vector(garden_max.X, WrappingTile{}));
-    steps[starting_pos.Y][starting_pos.X].insert({ 0, 0 });
+    steps[starting_pos.Y][starting_pos.X][0 + 4][0 + 4] = true;
 
     static constexpr int64_t c_NumSteps{ 26501365 };
     const int64_t steps_to_fill_first_square{ garden_max.X };
@@ -121,7 +123,8 @@ int main(int argc, char** argv)
                 const auto [mod_to, tile_to] = modulo_bounds(to);
                 if (".S"sv.contains(garden[mod_to.Y][mod_to.X]))
                 {
-                    next_steps[mod_to.Y][mod_to.X].insert(tile + tile_to);
+                    const Vec2 final_tile{ tile + tile_to };
+                    next_steps[mod_to.Y][mod_to.X][final_tile.Y + 4][final_tile.X + 4] = true;
                 }
             };
 
@@ -135,12 +138,19 @@ int main(int argc, char** argv)
                     const Vec2 lef{ x - 1, y };
                     const Vec2 rig{ x + 1, y };
 
-                    for (const auto& tile : steps[y][x])
+                    for (int64_t tx = -3; tx <= 3; tx++)
                     {
-                        step_to(tile, top);
-                        step_to(tile, bot);
-                        step_to(tile, lef);
-                        step_to(tile, rig);
+                        for (int64_t ty = -3; ty <= 3; ty++)
+                        {
+                            if (steps[y][x][ty + 4][tx + 4])
+                            {
+                                const Vec2 tile{tx, ty};
+                                step_to(tile, top);
+                                step_to(tile, bot);
+                                step_to(tile, lef);
+                                step_to(tile, rig);
+                            }
+                        }
                     }
                 }
             }
@@ -156,7 +166,7 @@ int main(int argc, char** argv)
         {
             for (int64_t y = 0; y < garden_max.Y; y++)
             {
-                cnt += steps[y][x].contains(square_pos) ? 1 : 0;
+                cnt += steps[y][x][square_pos.Y + 4][square_pos.X + 4] ? 1 : 0;
             }
         }
         fmt::print("{{ {}, {} }} -> {}\n", square_pos.X, square_pos.Y, cnt);

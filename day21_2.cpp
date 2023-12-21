@@ -197,5 +197,5 @@ int main(int argc, char** argv)
         num_parial_type_two * (nee_square + nww_square + see_square + sww_square)
     };
     fmt::print("The result is: {}", num_final_positions);
-    return num_final_positions != 238420328103151;
+    return num_final_positions != 600336060511101;
 }

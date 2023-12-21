@@ -117,5 +117,5 @@ int main(int argc, char** argv)
 
     size_t num_final_positions{ positions.size() };
     fmt::print("The result is: {}", num_final_positions);
-    return num_final_positions != 238420328103151;
+    return num_final_positions != 3632;
 }

@@ -340,7 +340,6 @@ int main(int argc, char** argv)
     print_xz();
     print_yz();
     settle();
-    settle();
     print_xz();
     print_yz();
 

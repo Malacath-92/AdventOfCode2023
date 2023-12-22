@@ -120,6 +120,12 @@ constexpr auto all_of(ContainerT&& container, FunT&& fun)
     const auto end_it = get_end(container);
     return std::all_of(begin_it, end_it, make_range_element_invocable<ContainerT>(std::forward<FunT>(fun)));
 }
+template<range ContainerT>
+constexpr auto all_of(ContainerT&& container)
+{
+    return all_of(std::forward<ContainerT>(container), [](const auto& v)
+                  { return bool(v); });
+}
 template<range ContainerT, range_element_invocable_r<ContainerT, bool> FunT>
 constexpr auto any_of(ContainerT&& container, FunT&& fun)
 {

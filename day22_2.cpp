@@ -372,7 +372,8 @@ int main(int argc, char** argv)
         }
     }
 
-    const auto compute_num_falling_bricks = [](this const auto& self, size_t i, auto& bricks) -> size_t {
+    const auto compute_num_falling_bricks = [](this const auto& self, size_t i, auto& bricks) -> size_t
+    {
         auto& brick{ bricks[i] };
 
         size_t num_falling_bricks{};
@@ -395,5 +396,5 @@ int main(int argc, char** argv)
     }
 
     fmt::print("The result is: {}", num_falling_bricks);
-    return num_falling_bricks != 3632;
+    return num_falling_bricks != 79144;
 }

@@ -384,5 +384,5 @@ int main(int argc, char** argv)
     }
 
     fmt::print("The result is: {}", num_safe_bricks);
-    return num_safe_bricks != 3632;
+    return num_safe_bricks != 475;
 }

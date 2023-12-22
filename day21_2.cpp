@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                         {
                             if (steps[y][x][ty + 4][tx + 4])
                             {
-                                const Vec2 tile{tx, ty};
+                                const Vec2 tile{ tx, ty };
                                 step_to(tile, top);
                                 step_to(tile, bot);
                                 step_to(tile, lef);

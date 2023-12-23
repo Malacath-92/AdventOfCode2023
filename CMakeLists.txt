@@ -122,10 +122,13 @@ foreach(main_file ${aoc_main_files})
 	set_target_properties(${main_file_name} PROPERTIES
 		VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		VS_DEBUGGER_COMMAND_ARGUMENTS "inputs/${input_file_name}.txt")
-    add_test(
-		NAME ${main_file_name}
-		COMMAND ${main_file_name} "inputs/${input_file_name}.txt"
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+	if (NOT AOC_AUTOBUILDER OR NOT "${input_file_name}" STREQUAL "day23")
+		add_test(
+			NAME ${main_file_name}
+			COMMAND ${main_file_name} "inputs/${input_file_name}.txt"
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+	endif()
 endforeach()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT day1_1)

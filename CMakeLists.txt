@@ -123,7 +123,10 @@ foreach(main_file ${aoc_main_files})
 		VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		VS_DEBUGGER_COMMAND_ARGUMENTS "inputs/${input_file_name}.txt")
 
-	if (NOT AOC_AUTOBUILDER OR NOT "${input_file_name}" STREQUAL "day23")
+	if (NOT AOC_AUTOBUILDER OR
+		NOT "${input_file_name}" STREQUAL "day23" OR
+		NOT "${input_file_name}" STREQUAL "day25")
+
 		add_test(
 			NAME ${main_file_name}
 			COMMAND ${main_file_name} "inputs/${input_file_name}.txt"
